@@ -371,7 +371,7 @@ class VenaETL:
         Export intersections data from the Vena model with pagination support.
         
         Args:
-            page_size (int): Number of records to fetch per page (default: 5000)
+            page_size (int): Number of records to fetch per page (default: 100000)
             
         Returns:
             Optional[pd.DataFrame]: DataFrame containing all intersections data, or None if there was an error
