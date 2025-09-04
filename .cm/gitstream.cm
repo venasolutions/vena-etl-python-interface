@@ -1,0 +1,112 @@
+# -*- mode: yaml -*-
+# +----------------------------------------------------------------------------+
+# | /:\ gitStream: Workflow automation for the code review process.            |
+# +----------------------------------------------------------------------------+
+# | This file contains one or more /:\ gitStream automations:                  |
+# | https:// docs.gitstream.cm                                                 |
+# |                                                                            |
+# | gitStream uses YAML syntax with nunjucks templating via Jinja 2.           |
+# |                                                                            |
+# | Automations follow an "if this, then that" execution format.               |
+# | More info here: https://docs.gitstream.cm/how-it-works/                    |
+# |                                                                            |
+# +----------------------------------------------------------------------------+
+
+# /:\ gitStream Reference Docs: 
+#    Context Variables: https://docs.gitstream.cm/context-variables/
+#    Filter Functions: https://docs.gitstream.cm/filter-functions/
+#    Automation Actions: https://docs.gitstream.cm/automation-actions/
+
+manifest:
+  version: 1.0
+
+# +----------------------------------------------------------------------------+
+# | Automations
+# +----------------------------------------------------------------------------+
+
+automations:
+  # Adds a comment for review time
+  # https://docs.gitstream.cm/automations/provide-estimated-time-to-review/
+  # https://docs.gitstream.cm/automation-actions/#add-comment
+  estimated_time_to_review:
+    if:
+      - {{ pr.labels | match(term='gitstream:time-to-review') | some }}
+    run:
+      - action: add-comment@v1
+        args:
+          comment: |
+            Might be around {{ calc.etr }} min review. But take your time!
+
+  # Flag PRs that are missing a Jira ticket reference in the title or description
+  # https://docs.gitstream.cm/integrations/jira/
+  label_missing_jira_info:
+    if:
+      - {{ not (has.jira_ticket_in_branch_name or has.jira_ticket_in_desc) }}
+    run:
+      - action: add-comment@v1
+        args:
+          comment: |
+            No JIRA ticket provided
+  
+  # This action, shall add a comment with codeExperts suggestion
+  # https://docs.gitstream.cm/automation-actions/#explain-code-experts
+  code_experts:
+    if:
+      - true
+    run:
+      - action: explain-code-experts@v1 
+        args:
+          gt: 10
+
+  share_knowledge:
+    if:
+      - {{ pr.labels | match(term='gitstream:share-knowledge') | some }}
+    run:
+      - action: add-reviewers@v1
+        args:
+          reviewers: {{ repo | codeExperts(gt=30, lt=60) | random }}
+      - action: add-comment@v1
+        args:
+          comment: |
+            gitStream has assigned a reviewer to increase knowledge sharing on this PR.
+
+  # This action, will review code        
+  # https://docs.gitstream.cm/automations/integrations/LinearBAI/code-review/
+  linearb_ai_review:
+    # Triggers only when PR is created or has new commits, see docs
+    #   https://docs.gitstream.cm/execution-model/#action-level-execution-control
+    if:
+      - {{ not pr.draft }}
+      - {{ not (is.bot_author or is.bot_branch) }}
+      - {{ pr.labels | match(term='gitstream:review') | some }}
+    run:
+      - action: code-review@v1
+        args:
+          approve_on_LGTM: {{ approve_pr_on_lgtm }} # optional arg, you can remove it
+          guidelines: {{ guidelines }}
+
+# +----------------------------------------------------------------------------+
+# | Custom Expressions                                                         |
+# | https://docs.gitstream.cm/how-it-works/#custom-expressions                 |
+# +----------------------------------------------------------------------------+
+
+# Add conditions for PR approvals. For example - allow approval only for specific users
+approve_pr_on_lgtm: false
+
+# Add `guidelines` to customize the code review prompts:
+# - For repository-specific guidelines: Place `.github/copilot-instructions.md` at your repository root
+# The `dump` filter ensures proper YAML formatting when the file content is inserted
+guidelines: {{ ".github/copilot-instructions.md" | readFile() | dump }}
+
+is:
+  bot_author: {{ pr.author | match(list=['github-actions', '_bot_', '[bot]', 'dependabot']) | some }}
+  bot_branch: {{ branch.name | match(list=['renovate/']) | some }}
+
+# https://docs.gitstream.cm/filter-functions/#estimatedreviewtime
+calc:
+  etr: {{ branch | estimatedReviewTime }}
+
+# https://docs.gitstream.cm/integrations/jira/
+has:
+  jira_ticket_in_branch_name: {{ branch.name | includes(regex=r/.*\/([Vv][Dd][Pp]|[Pp][Oo]|[Ss][Tt][Oo])-\d+.*/) }}
+  jira_ticket_in_desc: {{ pr.description | includes(regex=r/.*#([Vv][Dd][Pp]|[Pp][Oo]|[Ss][Tt][Oo])-\d+.*/) }}
