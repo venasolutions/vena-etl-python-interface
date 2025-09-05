@@ -37,6 +37,7 @@ from typing import Optional, Union, List, Dict, Any, TextIO
 import os
 from datetime import datetime
 from io import StringIO
+from .version import __version__
 import json
 
 class VenaETL:
@@ -84,15 +85,26 @@ class VenaETL:
         self.create_job_url = f'{self.base_url}/etl/templates/{template_id}/jobs'
         self.job_status_url = f'{self.base_url}/etl/jobs'  # Base URL for job operations
         self.intersections_url = f'{self.base_url}/models/{model_id}/intersections' if model_id else None
-        
+
+        def get_user_agent():
+            lib_name = "vena-etl-python-interface"
+            lib_version = __version__
+            try:
+                from notebookutils import mssparkutils
+                return f"{lib_name}/{lib_version}; platform/Microsoft Fabric"
+            except ImportError:
+                return f"{lib_name}/{lib_version}"
+
         # Headers for requests
         self.headers = {
             "accept": "application/json",
             "content-type": "application/json",
+            "User-Agent": get_user_agent(),
         }
         
         self.file_headers = {
             "accept": "application/json",
+            "User-Agent": get_user_agent(),
         }
 
     def _validate_dataframe(self, df: pd.DataFrame, required_columns: Optional[List[str]] = None) -> None:
