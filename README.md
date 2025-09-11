@@ -16,8 +16,8 @@ HUB = 'eu1'  # e.g., us1, us2, ca3
 API_USER = 'your_api_user'
 API_KEY = 'your_api_key'
 TEMPLATE_ID = 'your_template_id'
+DATA_SOURCE = 'your_erp_or_data_source'
 MODEL_ID = 'your_model_id'  # Optional, needed for exports
-JOB_TEMPLATE_ID = 'your_job_template_id'  # Template ID for job operations
 ```
 
 ## Usage
@@ -33,7 +33,8 @@ vena_etl = VenaETL(
     api_user=API_USER,
     api_key=API_KEY,
     template_id=TEMPLATE_ID,
-    model_id=MODEL_ID
+    data_source=DATA_SOURCE
+    model_id=MODEL_ID,
 )
 ```
 

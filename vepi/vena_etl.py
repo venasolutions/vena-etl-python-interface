@@ -55,10 +55,11 @@ class VenaETL:
         api_user (str): API user from Vena authentication token
         api_key (str): API key from Vena authentication token
         template_id (str): ETL template ID
+        data_source (str): Please indicate the ERP or data source, this helps Vena with support and troubleshooting.(e.g., NetSuite, Dynamics 365, SAP, ADP, Other) 
         model_id (str, optional): Model ID for export operations
     """
     
-    def __init__(self, hub: str, api_user: str, api_key: str, template_id: str, model_id: Optional[str] = None):
+    def __init__(self, hub: str, api_user: str, api_key: str, template_id: str, data_source: str, model_id: Optional[str] = None):
         """
         Initialize the Vena ETL client.
         
@@ -67,10 +68,15 @@ class VenaETL:
             api_user (str): API user from Vena authentication token
             api_key (str): API key from Vena authentication token
             template_id (str): ETL template ID
+            data_source (str): Please indicate the ERP or data source, this helps Vena with support and troubleshooting.(e.g., NetSuite, Dynamics 365, SAP, ADP, Other)
             model_id (str, optional): Model ID for export operations
+
         """
         if not all([hub, api_user, api_key, template_id]):
             raise ValueError("hub, api_user, api_key, and template_id are required")
+
+        if not data_source:
+            raise ValueError("data_source is required. Please indicate the ERP or data source, this helps Vena with support and troubleshooting")
             
         self.hub = hub
         self.api_user = api_user
@@ -91,9 +97,9 @@ class VenaETL:
             lib_version = __version__
             try:
                 from notebookutils import mssparkutils
-                return f"{lib_name}/{lib_version}; platform/Microsoft Fabric"
+                return f"{lib_name}/{lib_version}; platform/Microsoft Fabric; source/{data_source}"
             except ImportError:
-                return f"{lib_name}/{lib_version}"
+                return f"{lib_name}/{lib_version}; platform/Other; source/{data_source}"
 
         # Headers for requests
         self.headers = {
@@ -383,7 +389,7 @@ class VenaETL:
         Export intersections data from the Vena model with pagination support.
         
         Args:
-            page_size (int): Number of records to fetch per page (default: 100000)
+            page_size (int): Number of records to fetch per page (default: 5000, max: 100000)
             
         Returns:
             Optional[pd.DataFrame]: DataFrame containing all intersections data, or None if there was an error
