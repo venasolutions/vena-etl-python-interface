@@ -1,8 +1,9 @@
 from setuptools import setup, find_packages
 
-# Import the version from version.py
-from vepi.version import __version__
-
+# Read the version from version.py
+with open("vepi/version.py", "r", encoding="utf-8") as f:
+    __version__ = [line for line in f if line.startswith("__version__")][0].split('"')[1]
+    
 # Read the README file for the long description
 with open("README.md", "r", encoding="utf-8") as fh:
     long_description = fh.read()
