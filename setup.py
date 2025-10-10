@@ -9,7 +9,7 @@ with open("README.md", "r", encoding="utf-8") as fh:
     long_description = fh.read()
 
 setup(
-    name="vena-etl-python-interface",
+    name="vepi",
     version=__version__,
     author="Greg Hetherington", 
     author_email="ghetherington@venacorp.com",
@@ -29,4 +29,5 @@ setup(
         "pandas>=1.1.0",
     ],
     include_package_data=True,
+
 )
