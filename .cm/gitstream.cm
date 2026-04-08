@@ -42,6 +42,7 @@ automations:
   label_missing_jira_info:
     if:
       - {{ not (has.jira_ticket_in_branch_name or has.jira_ticket_in_desc) }}
+      - {{ pr.labels | match(term='gitstream:jira-check') | some }}
     run:
       - action: add-comment@v1
         args:
@@ -52,7 +53,7 @@ automations:
   # https://docs.gitstream.cm/automation-actions/#explain-code-experts
   code_experts:
     if:
-      - true
+      - {{ pr.labels | match(term='gitstream:code-experts') | some }}
     run:
       - action: explain-code-experts@v1 
         args:
@@ -96,7 +97,7 @@ approve_pr_on_lgtm: false
 # Add `guidelines` to customize the code review prompts:
 # - For repository-specific guidelines: Place `.github/copilot-instructions.md` at your repository root
 # The `dump` filter ensures proper YAML formatting when the file content is inserted
-guidelines: {{ ".github/copilot-instructions.md" | readFile() | dump }}
+guidelines: {{ ".github/copilot-instructions.md" | readMarkdownWithLinks() | dump }}
 
 is:
   bot_author: {{ pr.author | match(list=['github-actions', '_bot_', '[bot]', 'dependabot']) | some }}
