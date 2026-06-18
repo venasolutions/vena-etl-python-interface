@@ -9,12 +9,12 @@ const path = require('path');
 function readFile(filePath) {
   // Whitelist: only allow relative paths within current directory
   const normalizedPath = path.normalize(filePath);
-  
+
   if (path.isAbsolute(normalizedPath) || normalizedPath.includes('..')) {
     console.log(`Invalid path: ${filePath}`);
     return null;
   }
-  
+
   try {
     return fs.readFileSync(normalizedPath, 'utf8');
   } catch (error) {
@@ -38,7 +38,7 @@ function extractInternalLinks(content, basePath) {
   while ((match = linkRegex.exec(content)) !== null) {
     const linkText = match[1];
     const linkPath = match[2];
-    
+
     // Check if it's an internal link (not http/https and ends with .md)
     if (!linkPath.startsWith('http') && linkPath.endsWith('.md')) {
       const resolvedPath = path.join(basePath, linkPath);
@@ -72,7 +72,7 @@ function readMarkdown(filePath, options = {}) {
   } = options;
 
   const normalizedPath = path.normalize(filePath);
-  
+
   // Check if we've already visited this file (prevent cycles)
   if (visited.has(normalizedPath)) {
     return {
@@ -141,12 +141,12 @@ function readMarkdown(filePath, options = {}) {
 
 /**
  * @module readMarkdownWithLinks
- * @description Reads a markdown file and follows internal links to create a comprehensive document view. 
+ * @description Reads a markdown file and follows internal links to create a comprehensive document view.
  * Prevents circular references and supports configurable depth limits.
  * @param {string} filePath - Path to the markdown file to read
  * @param {Object} [options={}] - Configuration options for link following
  * @param {boolean} [options.followLinks=true] - Whether to follow internal links
- * @param {number} [options.maxDepth=3] - Maximum depth to follow links  
+ * @param {number} [options.maxDepth=3] - Maximum depth to follow links
  * @param {boolean} [options.structured=false] - Return structured data instead of combined text
  * @returns {string} Combined content of the file and all linked files with headers
  * @example {{ "docs/README.md" | readMarkdownWithLinks }}
@@ -166,31 +166,31 @@ function readMarkdownWithLinks(filePath, options = {}) {
     visited: new Set(),
     currentDepth: 0
   });
-  
+
   // Return structured data if requested
   if (structured) {
     return result;
   }
-  
+
   // Otherwise return combined content
   function combineContent(fileResult, depth = 0) {
     const indent = '  '.repeat(depth);
     let combined = '';
-    
+
     if (fileResult.content) {
       combined += `${indent}=== ${path.basename(fileResult.path)} ===\n`;
       combined += fileResult.content + '\n\n';
     }
-    
+
     if (fileResult.linkedFiles) {
       for (const linkedFile of fileResult.linkedFiles) {
         combined += combineContent(linkedFile, depth + 1);
       }
     }
-    
+
     return combined;
   }
-  
+
   return combineContent(result);
 }
 
@@ -204,7 +204,7 @@ module.exports = readMarkdownWithLinks;
 // ============================================================================
 if (require.main === module) {
   const fs = require('fs');
-  
+
   function assert(condition, message) {
     if (!condition) { console.error(`❌ ${message}`); process.exit(1); }
     console.log(`✅ ${message}`);
@@ -226,7 +226,7 @@ if (require.main === module) {
   // Test 2: Link following
   r = readMarkdown('./test-files/main.md', { maxDepth: 2 });
   console.log(r.linkedFiles[0])
-  assert(r.linkedFiles.length === 2, 'Follows 2 links');  
+  assert(r.linkedFiles.length === 2, 'Follows 2 links');
   assert(r.linkedFiles[0].linkedFiles.length === 1, 'Nested link following');
 
   // Test 3: Circular reference
